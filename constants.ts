@@ -4,7 +4,7 @@ import { Profile, Experience, Project, Skill, Education, SiteConfig } from './ty
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English', flag: '🇺🇸' },
   { code: 'zh', label: '简体中文', flag: '🇨🇳' },
-  { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
+  { code: 'zh-TW', label: '繁體中文', flag: '🇭🇰' },
   { code: 'ja', label: '日本語', flag: '🇯🇵' },
 ];
 

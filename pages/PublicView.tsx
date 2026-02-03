@@ -5,7 +5,7 @@ import { Github, Linkedin, Mail, PlayCircle, ExternalLink, GraduationCap, MapPin
 import { dataService } from '../services/dataService';
 import { Profile, Experience, Project, Skill, Education, SiteConfig, LanguageCode } from '../types';
 import { Section, Container } from '../components/ui/Layouts';
-import { SUPPORTED_LANGUAGES, MOCK_PROFILE_EN, MOCK_PROFILE_ZH, MOCK_EXPERIENCE, MOCK_PROJECTS, MOCK_SKILLS, MOCK_EDUCATION, MOCK_CONFIG } from '../constants';
+import { SUPPORTED_LANGUAGES, MOCK_PROFILE_EN, MOCK_PROFILE_ZH, MOCK_PROFILE_ZH_TW, MOCK_EXPERIENCE, MOCK_PROJECTS, MOCK_SKILLS, MOCK_EDUCATION, MOCK_CONFIG } from '../constants';
 
 const getThemeStyles = (theme: string) => {
   switch (theme) {
@@ -88,7 +88,6 @@ const VideoEmbed: React.FC<{ url: string }> = ({ url }) => {
 };
 
 const PublicView: React.FC<{ setScreenshotMode: (mode: boolean) => void, isScreenshotMode: boolean }> = ({ setScreenshotMode, isScreenshotMode }) => {
-  // Now supports getting username from URL
   const { username } = useParams<{ username: string }>();
   
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -107,31 +106,47 @@ const PublicView: React.FC<{ setScreenshotMode: (mode: boolean) => void, isScree
   const loadData = async (language: LanguageCode) => {
     setLoading(true);
     try {
-      if (!username) {
-        // --- ROOT PATH / ---
-        // Load the "Site Resume" (Mock data or specific 'official' user if configured in future)
-        // For now, we strictly use the Mock constants which now represent the Product Resume.
-        const defaultProfile = language === 'zh' ? MOCK_PROFILE_ZH : MOCK_PROFILE_EN;
-        setProfile(defaultProfile);
-        setExperiences(MOCK_EXPERIENCE.filter(e => e.language === language));
-        setProjects(MOCK_PROJECTS.filter(p => p.language === language));
-        setSkills(MOCK_SKILLS.filter(s => s.language === language));
-        setEducation(MOCK_EDUCATION.filter(e => e.language === language));
-        setConfig(MOCK_CONFIG);
+      let targetProfile: Profile | null = null;
+      let isMockFallback = false;
+
+      // 1. Determine which profile to fetch
+      if (username) {
+        // Explicit user path: /p/dicsonpan
+        targetProfile = await dataService.getProfile(language, { username });
       } else {
-        // --- USER PATH /p/:username ---
-        // 1. Get Profile first to get the user_id
-        const p = await dataService.getProfile(language, { username });
-        setProfile(p);
+        // Root path: /
+        // STRATEGY: Try to fetch the "official" user (username='next-folio') from DB first.
+        // If not found (e.g., fresh install), fall back to static MOCK constants.
+        targetProfile = await dataService.getProfile(language, { username: 'next-folio' });
         
-        if (p && p.user_id) {
-          // 2. Use user_id to fetch related data
+        if (!targetProfile) {
+          isMockFallback = true;
+          // Load Mock Data directly
+          let defaultProfile;
+          if (language === 'zh') defaultProfile = MOCK_PROFILE_ZH;
+          else if (language === 'zh-TW') defaultProfile = MOCK_PROFILE_ZH_TW;
+          else defaultProfile = MOCK_PROFILE_EN;
+
+          setProfile(defaultProfile);
+          setExperiences(MOCK_EXPERIENCE.filter(e => e.language === language));
+          setProjects(MOCK_PROJECTS.filter(p => p.language === language));
+          setSkills(MOCK_SKILLS.filter(s => s.language === language));
+          setEducation(MOCK_EDUCATION.filter(e => e.language === language));
+          setConfig(MOCK_CONFIG);
+        }
+      }
+
+      // 2. If we found a real profile (either via /p/username or the official root user)
+      if (targetProfile && !isMockFallback) {
+        setProfile(targetProfile);
+        
+        if (targetProfile.user_id) {
           const [e, proj, s, edu, c] = await Promise.all([
-            dataService.getExperiences(language, p.user_id),
-            dataService.getProjects(language, p.user_id),
-            dataService.getSkills(language, p.user_id),
-            dataService.getEducation(language, p.user_id),
-            dataService.getConfig(p.user_id)
+            dataService.getExperiences(language, targetProfile.user_id),
+            dataService.getProjects(language, targetProfile.user_id),
+            dataService.getSkills(language, targetProfile.user_id),
+            dataService.getEducation(language, targetProfile.user_id),
+            dataService.getConfig(targetProfile.user_id)
           ]);
           setExperiences(e);
           setProjects(proj);
@@ -140,6 +155,7 @@ const PublicView: React.FC<{ setScreenshotMode: (mode: boolean) => void, isScree
           setConfig(c);
         }
       }
+
     } catch (error) {
       console.error("Failed to load data", error);
     } finally {
@@ -149,12 +165,12 @@ const PublicView: React.FC<{ setScreenshotMode: (mode: boolean) => void, isScree
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-zinc-500">Loading...</div>;
 
-  // Not Found State (Only if we tried to fetch a user and got nothing)
+  // Not Found State
   if (!profile) {
     return (
        <div className="min-h-screen flex flex-col items-center justify-center text-zinc-400 gap-4">
          <AlertCircle size={48} className="text-red-500"/>
-         <p className="text-lg">User <strong>{username}</strong> not found.</p>
+         <p className="text-lg">User <strong>{username || 'next-folio'}</strong> not found.</p>
          <Link to="/" className="text-primary hover:underline">Go Home</Link>
        </div>
     );

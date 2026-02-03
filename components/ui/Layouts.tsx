@@ -5,6 +5,17 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Monitor, LogIn, LogOut, User } from 'lucide-react';
 import { authService } from '../../services/authService';
 
+// Logo Component
+const Logo: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => (
+  <svg className={className} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="40" height="40" rx="8" fill="currentColor" className="text-zinc-900"/>
+    <rect x="2" y="2" width="36" height="36" rx="6" stroke="currentColor" strokeWidth="2" className="text-zinc-700"/>
+    {/* Stylized N and Folio/Page Arrow */}
+    <path d="M12 28V12L22 20L12 28Z" fill="currentColor" className="text-primary"/>
+    <path d="M16 12H28V28H24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-white"/>
+  </svg>
+);
+
 export const Container: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
   <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
     {children}
@@ -48,8 +59,9 @@ export const Navbar: React.FC<NavbarProps> = ({ hidden = false }) => {
       <Container>
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0 flex items-center gap-4">
-             <Link to="/" className="text-xl font-bold tracking-tighter text-white">
-               Portfolio<span className="text-primary">.Pro</span>
+             <Link to="/" className="text-xl font-bold tracking-tighter text-white flex items-center gap-2">
+               <Logo />
+               <span>Next<span className="text-primary">Folio</span></span>
              </Link>
           </div>
           
@@ -96,7 +108,7 @@ export const Footer: React.FC<{hidden?: boolean}> = ({ hidden }) => {
   return (
     <footer className="bg-zinc-950 py-12 border-t border-zinc-900 print:hidden">
       <Container className="text-center text-zinc-500 text-sm">
-        <p>&copy; {new Date().getFullYear()} Portfolio Pro. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} NextFolio. All rights reserved.</p>
       </Container>
     </footer>
   );

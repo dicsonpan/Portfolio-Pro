@@ -1,10 +1,10 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { AppData, Experience, Profile, Project, Skill, Education, SiteConfig, LanguageCode, UserSecrets } from '../types';
-import { MOCK_EXPERIENCE, MOCK_PROFILE_EN, MOCK_PROFILE_ZH, MOCK_PROJECTS, MOCK_SKILLS, MOCK_EDUCATION, MOCK_CONFIG, SUPABASE_ANON_KEY, SUPABASE_URL } from '../constants';
+import { MOCK_EXPERIENCE, MOCK_PROFILE_EN, MOCK_PROFILE_ZH, MOCK_PROFILE_ZH_TW, MOCK_PROJECTS, MOCK_SKILLS, MOCK_EDUCATION, MOCK_CONFIG, SUPABASE_ANON_KEY, SUPABASE_URL } from '../constants';
 import { v4 as uuidv4 } from 'uuid';
 
-const STORAGE_KEY = 'portfolio_data_v5'; // Bumped version
+const STORAGE_KEY = 'nextfolio_data_v1'; // Bumped key for name change
 
 let supabase: SupabaseClient | null = null;
 
@@ -16,7 +16,7 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
 const initStorage = () => {
   if (!localStorage.getItem(STORAGE_KEY)) {
     const initialData: AppData = {
-      profiles: [MOCK_PROFILE_EN, MOCK_PROFILE_ZH],
+      profiles: [MOCK_PROFILE_EN, MOCK_PROFILE_ZH, MOCK_PROFILE_ZH_TW],
       experiences: MOCK_EXPERIENCE,
       education: MOCK_EDUCATION,
       projects: MOCK_PROJECTS,

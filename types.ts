@@ -1,5 +1,5 @@
 
-export type LanguageCode = 'en' | 'zh' | 'ja' | 'es';
+export type LanguageCode = 'en' | 'zh' | 'zh-TW' | 'ja' | 'es';
 
 export interface UserSecrets {
   user_id: string;

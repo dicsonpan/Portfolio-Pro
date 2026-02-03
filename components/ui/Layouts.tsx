@@ -1,7 +1,7 @@
 import React from 'react';
-import { HashLink } from 'react-router-hash-link'; // Note: We'll simulate this with anchors since we can't install packages
+import { HashLink } from 'react-router-hash-link'; 
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Monitor, User } from 'lucide-react';
+import { LayoutDashboard, Monitor } from 'lucide-react';
 
 export const Container: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
   <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
@@ -10,19 +10,25 @@ export const Container: React.FC<{ children: React.ReactNode; className?: string
 );
 
 export const Section: React.FC<{ id?: string; className?: string; children: React.ReactNode }> = ({ id, className = '', children }) => (
-  <section id={id} className={`py-20 ${className}`}>
+  <section id={id} className={`py-12 md:py-20 ${className}`}>
     <Container>
       {children}
     </Container>
   </section>
 );
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  hidden?: boolean;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ hidden = false }) => {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
 
+  if (hidden) return null;
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-zinc-800">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-zinc-800 print:hidden">
       <Container>
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
@@ -58,10 +64,13 @@ export const Navbar: React.FC = () => {
   );
 };
 
-export const Footer: React.FC = () => (
-  <footer className="bg-zinc-950 py-12 border-t border-zinc-900">
-    <Container className="text-center text-zinc-500 text-sm">
-      <p>&copy; {new Date().getFullYear()} Portfolio Pro. All rights reserved.</p>
-    </Container>
-  </footer>
-);
+export const Footer: React.FC<{hidden?: boolean}> = ({ hidden }) => {
+  if (hidden) return null;
+  return (
+    <footer className="bg-zinc-950 py-12 border-t border-zinc-900 print:hidden">
+      <Container className="text-center text-zinc-500 text-sm">
+        <p>&copy; {new Date().getFullYear()} Portfolio Pro. All rights reserved.</p>
+      </Container>
+    </footer>
+  );
+};

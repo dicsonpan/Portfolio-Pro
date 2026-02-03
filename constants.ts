@@ -1,25 +1,33 @@
-import { Profile, Experience, Project, Skill } from './types';
+import { Profile, Experience, Project, Skill, Education, SiteConfig } from './types';
 
 export const MOCK_PROFILE: Profile = {
   id: '1',
   name: 'Alex Chen',
-  title: 'Senior Frontend Engineer',
+  title: 'Product Designer & Developer',
+  tagline: 'Bridging the gap between code and design.',
   bio: 'I craft high-performance web applications with a focus on user experience and scalable architecture. Passionate about React, TypeScript, and clean UI design.',
   avatar_url: 'https://picsum.photos/400/400',
   email: 'alex@example.com',
   location: 'San Francisco, CA',
+  phone: '+1 (555) 123-4567',
   github_url: 'https://github.com',
   linkedin_url: 'https://linkedin.com',
+};
+
+export const MOCK_CONFIG: SiteConfig = {
+  theme: 'modern',
+  primary_color: '#10b981',
+  display_order: ['about', 'experience', 'projects', 'education', 'skills']
 };
 
 export const MOCK_EXPERIENCE: Experience[] = [
   {
     id: '1',
     company: 'TechFlow Inc.',
-    role: 'Senior React Developer',
+    role: 'Senior Product Designer',
     start_date: '2021-03-01',
     end_date: null,
-    description: 'Leading the frontend team in rebuilding the core SaaS platform using Next.js and Tailwind. Improved performance by 40%.',
+    description: 'Leading the design system team. Improved workflow efficiency by 40% through new Figma plugins and React component libraries.',
     current: true,
   },
   {
@@ -31,6 +39,18 @@ export const MOCK_EXPERIENCE: Experience[] = [
     description: 'Collaborated with designers to implement pixel-perfect UIs for e-commerce clients. Migrated legacy jQuery codebases to React.',
     current: false,
   },
+];
+
+export const MOCK_EDUCATION: Education[] = [
+  {
+    id: '1',
+    school: 'University of California, Berkeley',
+    degree: 'Bachelor of Science',
+    field: 'Computer Science & Design',
+    start_date: '2015-09-01',
+    end_date: '2019-05-30',
+    description: 'Graduated with Honors. President of the Design Club.'
+  }
 ];
 
 export const MOCK_PROJECTS: Project[] = [
@@ -54,12 +74,10 @@ export const MOCK_PROJECTS: Project[] = [
 
 export const MOCK_SKILLS: Skill[] = [
   { id: '1', name: 'React', category: 'frontend', proficiency: 95 },
-  { id: '2', name: 'TypeScript', category: 'frontend', proficiency: 90 },
+  { id: '2', name: 'Figma', category: 'design', proficiency: 90 },
   { id: '3', name: 'Node.js', category: 'backend', proficiency: 80 },
-  { id: '4', name: 'Figma', category: 'design', proficiency: 75 },
+  { id: '4', name: 'Public Speaking', category: 'soft-skills', proficiency: 85 },
 ];
 
-// In a real app, these would come from process.env
-// Users should add their Supabase credentials here for the "real" mode to work
 export const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || '';
 export const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';

@@ -4,7 +4,7 @@ import { AppData, Experience, Profile, Project, Skill, Education, SiteConfig, La
 import { MOCK_EXPERIENCE, MOCK_PROFILE_EN, MOCK_PROFILE_ZH, MOCK_PROJECTS, MOCK_SKILLS, MOCK_EDUCATION, MOCK_CONFIG, SUPABASE_ANON_KEY, SUPABASE_URL } from '../constants';
 import { v4 as uuidv4 } from 'uuid';
 
-const STORAGE_KEY = 'portfolio_data_v4'; // Bumped version
+const STORAGE_KEY = 'portfolio_data_v5'; // Bumped version
 
 let supabase: SupabaseClient | null = null;
 
@@ -79,17 +79,18 @@ export const dataService = {
   // --- Config ---
   async getConfig(userId?: string): Promise<SiteConfig> {
     if (supabase) {
-       // If userId is provided, fetch specific user's config (Public View)
-       // If not, fetch logged-in user's config (Admin View)
        let uid = userId;
+       
+       // If no ID provided, try getting logged in user (for Admin)
        if (!uid) {
          const { data: { user } } = await supabase.auth.getUser();
          uid = user?.id;
        }
+
+       // If we have a UID (either from arg or auth), fetch specific config
        if (uid) {
          const { data } = await supabase.from('config').select('*').eq('user_id', uid).single();
          if (data) return data;
-         // If no config found for user, return default
          return MOCK_CONFIG;
        }
     }
@@ -101,9 +102,6 @@ export const dataService = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       
-      // Upsert needs to match primary key or constraint. 
-      // Since we added user_id, we need to handle insert/update logic carefully or ensure ID is consistent.
-      // Easiest is to select first, then update or insert.
       const { data: existing } = await supabase.from('config').select('id').eq('user_id', user.id).single();
       
       if (existing) {
@@ -119,19 +117,35 @@ export const dataService = {
   },
 
   // --- Profile ---
-  async getProfile(lang: LanguageCode, userId?: string): Promise<Profile | null> {
+  
+  // New method: Fetch by Username (or User ID)
+  async getProfile(lang: LanguageCode, identifier?: { userId?: string; username?: string }): Promise<Profile | null> {
     if (supabase) {
-      let uid = userId;
-      if (!uid) {
-         const { data: { user } } = await supabase.auth.getUser();
-         uid = user?.id;
+      let query = supabase.from('profile').select('*').eq('language', lang);
+
+      if (identifier?.userId) {
+        query = query.eq('user_id', identifier.userId);
+      } else if (identifier?.username) {
+        query = query.eq('username', identifier.username);
+      } else {
+        // Fallback for Admin view: use logged-in user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          query = query.eq('user_id', user.id);
+        } else {
+          // No identifier and no login? return null
+          return null;
+        }
       }
-      if (uid) {
-        const { data } = await supabase.from('profile').select('*').eq('user_id', uid).eq('language', lang).single();
-        return data; 
-      }
+
+      const { data } = await query.single();
+      return data;
     }
+    
+    // Local Storage Fallback
     const data = getLocalData();
+    // In local mode, we basically ignore username/id for simplicity, 
+    // effectively treating the local user as the "only" user.
     return data.profiles.find(p => p.language === lang) || null;
   },
 
@@ -153,44 +167,21 @@ export const dataService = {
     setLocalData(data);
   },
 
-  // --- Assets ---
-  async uploadImage(file: File): Promise<string> {
-    if (supabase) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `${fileName}`; // Might want to folder by user_id in future
-
-      const { error: uploadError } = await supabase.storage
-        .from('portfolio-assets')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage.from('portfolio-assets').getPublicUrl(filePath);
-      return data.publicUrl;
-    } else {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = error => reject(error);
-      });
-    }
-  },
-
   // --- Experience ---
   async getExperiences(lang: LanguageCode, userId?: string): Promise<Experience[]> {
-    if (supabase) {
-      let uid = userId;
-      if (!uid) {
-        const { data: { user } } = await supabase.auth.getUser();
-        uid = user?.id;
-      }
-      if (uid) {
-        const { data } = await supabase.from('experiences').select('*').eq('user_id', uid).eq('language', lang).order('start_date', { ascending: false });
+    if (supabase && userId) {
+        const { data } = await supabase.from('experiences').select('*').eq('user_id', userId).eq('language', lang).order('start_date', { ascending: false });
         return data || [];
-      }
     }
+    // If no userId provided in supabase mode, likely Admin asking for own data
+    if (supabase && !userId) {
+       const { data: { user } } = await supabase.auth.getUser();
+       if (user) {
+          const { data } = await supabase.from('experiences').select('*').eq('user_id', user.id).eq('language', lang).order('start_date', { ascending: false });
+          return data || [];
+       }
+    }
+
     return getLocalData().experiences.filter(e => e.language === lang);
   },
 
@@ -201,7 +192,6 @@ export const dataService = {
       await supabase.from('experiences').upsert({ ...exp, user_id: user.id });
       return;
     }
-    // Local logic omitted for brevity, same as before
     const data = getLocalData();
     const index = data.experiences.findIndex(e => e.id === exp.id);
     if (index >= 0) data.experiences[index] = exp;
@@ -221,17 +211,17 @@ export const dataService = {
 
   // --- Education ---
   async getEducation(lang: LanguageCode, userId?: string): Promise<Education[]> {
-    if (supabase) {
-      let uid = userId;
-      if (!uid) {
-        const { data: { user } } = await supabase.auth.getUser();
-        uid = user?.id;
-      }
-      if (uid) {
-        const { data } = await supabase.from('education').select('*').eq('user_id', uid).eq('language', lang).order('start_date', { ascending: false });
-        return data || [];
-      }
+    if (supabase && userId) {
+      const { data } = await supabase.from('education').select('*').eq('user_id', userId).eq('language', lang).order('start_date', { ascending: false });
+      return data || [];
     }
+    if (supabase && !userId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+           const { data } = await supabase.from('education').select('*').eq('user_id', user.id).eq('language', lang).order('start_date', { ascending: false });
+           return data || [];
+        }
+     }
     return getLocalData().education.filter(e => e.language === lang);
   },
 
@@ -261,17 +251,17 @@ export const dataService = {
 
   // --- Projects ---
   async getProjects(lang: LanguageCode, userId?: string): Promise<Project[]> {
-    if (supabase) {
-      let uid = userId;
-      if (!uid) {
-        const { data: { user } } = await supabase.auth.getUser();
-        uid = user?.id;
-      }
-      if (uid) {
-        const { data } = await supabase.from('projects').select('*').eq('user_id', uid).eq('language', lang);
-        return data || [];
-      }
+    if (supabase && userId) {
+      const { data } = await supabase.from('projects').select('*').eq('user_id', userId).eq('language', lang);
+      return data || [];
     }
+    if (supabase && !userId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+           const { data } = await supabase.from('projects').select('*').eq('user_id', user.id).eq('language', lang);
+           return data || [];
+        }
+     }
     return getLocalData().projects.filter(p => p.language === lang);
   },
 
@@ -301,17 +291,17 @@ export const dataService = {
   
   // --- Skills ---
   async getSkills(lang: LanguageCode, userId?: string): Promise<Skill[]> {
-     if (supabase) {
-       let uid = userId;
-       if (!uid) {
-         const { data: { user } } = await supabase.auth.getUser();
-         uid = user?.id;
-       }
-       if (uid) {
-        const { data } = await supabase.from('skills').select('*').eq('user_id', uid).eq('language', lang);
+     if (supabase && userId) {
+        const { data } = await supabase.from('skills').select('*').eq('user_id', userId).eq('language', lang);
         return data || [];
-       }
-    }
+     }
+     if (supabase && !userId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+           const { data } = await supabase.from('skills').select('*').eq('user_id', user.id).eq('language', lang);
+           return data || [];
+        }
+     }
     return getLocalData().skills.filter(s => s.language === lang);
   },
   
@@ -337,5 +327,30 @@ export const dataService = {
     const data = getLocalData();
     data.skills = data.skills.filter(s => s.id !== id);
     setLocalData(data);
+  },
+
+  // --- Assets ---
+  async uploadImage(file: File): Promise<string> {
+    if (supabase) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio-assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('portfolio-assets').getPublicUrl(filePath);
+      return data.publicUrl;
+    } else {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+    }
   }
 };

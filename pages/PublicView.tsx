@@ -1,11 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Github, Linkedin, Mail, Twitter, ExternalLink, GraduationCap, MapPin, Camera, X, Globe, Phone, PlayCircle, AlertCircle } from 'lucide-react';
+import { Github, Linkedin, Mail, PlayCircle, ExternalLink, GraduationCap, MapPin, Camera, X, Globe, Phone, AlertCircle } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { Profile, Experience, Project, Skill, Education, SiteConfig, LanguageCode } from '../types';
 import { Section, Container } from '../components/ui/Layouts';
-import { SUPPORTED_LANGUAGES } from '../constants';
+import { SUPPORTED_LANGUAGES, MOCK_PROFILE_EN, MOCK_PROFILE_ZH, MOCK_EXPERIENCE, MOCK_PROJECTS, MOCK_SKILLS, MOCK_EDUCATION, MOCK_CONFIG } from '../constants';
 
 const getThemeStyles = (theme: string) => {
   switch (theme) {
@@ -88,7 +88,9 @@ const VideoEmbed: React.FC<{ url: string }> = ({ url }) => {
 };
 
 const PublicView: React.FC<{ setScreenshotMode: (mode: boolean) => void, isScreenshotMode: boolean }> = ({ setScreenshotMode, isScreenshotMode }) => {
-  const { userId } = useParams<{ userId: string }>();
+  // Now supports getting username from URL
+  const { username } = useParams<{ username: string }>();
+  
   const [profile, setProfile] = useState<Profile | null>(null);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -100,28 +102,44 @@ const PublicView: React.FC<{ setScreenshotMode: (mode: boolean) => void, isScree
 
   useEffect(() => {
     loadData(lang);
-  }, [lang, userId]);
+  }, [lang, username]);
 
   const loadData = async (language: LanguageCode) => {
     setLoading(true);
     try {
-      // If userId is undefined, dataService handles fallback to local or current user, 
-      // but for Public Route, we usually want explicit ID.
-      // If no ID is provided, this might be a "Demo" view.
-      const [p, e, proj, s, edu, c] = await Promise.all([
-        dataService.getProfile(language, userId),
-        dataService.getExperiences(language, userId),
-        dataService.getProjects(language, userId),
-        dataService.getSkills(language, userId),
-        dataService.getEducation(language, userId),
-        dataService.getConfig(userId)
-      ]);
-      setProfile(p);
-      setExperiences(e);
-      setProjects(proj);
-      setSkills(s);
-      setEducation(edu);
-      setConfig(c);
+      if (!username) {
+        // --- ROOT PATH / ---
+        // Load the "Site Resume" (Mock data or specific 'official' user if configured in future)
+        // For now, we strictly use the Mock constants which now represent the Product Resume.
+        const defaultProfile = language === 'zh' ? MOCK_PROFILE_ZH : MOCK_PROFILE_EN;
+        setProfile(defaultProfile);
+        setExperiences(MOCK_EXPERIENCE.filter(e => e.language === language));
+        setProjects(MOCK_PROJECTS.filter(p => p.language === language));
+        setSkills(MOCK_SKILLS.filter(s => s.language === language));
+        setEducation(MOCK_EDUCATION.filter(e => e.language === language));
+        setConfig(MOCK_CONFIG);
+      } else {
+        // --- USER PATH /p/:username ---
+        // 1. Get Profile first to get the user_id
+        const p = await dataService.getProfile(language, { username });
+        setProfile(p);
+        
+        if (p && p.user_id) {
+          // 2. Use user_id to fetch related data
+          const [e, proj, s, edu, c] = await Promise.all([
+            dataService.getExperiences(language, p.user_id),
+            dataService.getProjects(language, p.user_id),
+            dataService.getSkills(language, p.user_id),
+            dataService.getEducation(language, p.user_id),
+            dataService.getConfig(p.user_id)
+          ]);
+          setExperiences(e);
+          setProjects(proj);
+          setSkills(s);
+          setEducation(edu);
+          setConfig(c);
+        }
+      }
     } catch (error) {
       console.error("Failed to load data", error);
     } finally {
@@ -131,32 +149,18 @@ const PublicView: React.FC<{ setScreenshotMode: (mode: boolean) => void, isScree
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-zinc-500">Loading...</div>;
 
-  // Landing Page State: If no profile found and no ID provided (Root path without login)
-  if (!profile && !userId) {
-     return (
-       <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-white p-4 text-center">
-         <h1 className="text-4xl md:text-6xl font-bold mb-6">Portfolio<span className="text-primary">.Pro</span></h1>
-         <p className="text-xl text-zinc-400 mb-8 max-w-lg">Create a stunning, AI-powered portfolio in minutes. Manage multiple languages and designs with ease.</p>
-         <div className="flex gap-4">
-            <Link to="/auth" className="bg-primary hover:bg-emerald-600 px-8 py-3 rounded-full font-bold transition-colors">Get Started</Link>
-            <Link to="/auth" className="bg-zinc-800 hover:bg-zinc-700 px-8 py-3 rounded-full font-bold transition-colors">Login</Link>
-         </div>
-       </div>
-     );
-  }
-
-  // Not Found State
+  // Not Found State (Only if we tried to fetch a user and got nothing)
   if (!profile) {
     return (
        <div className="min-h-screen flex flex-col items-center justify-center text-zinc-400 gap-4">
          <AlertCircle size={48} className="text-red-500"/>
-         <p className="text-lg">User profile not found.</p>
+         <p className="text-lg">User <strong>{username}</strong> not found.</p>
          <Link to="/" className="text-primary hover:underline">Go Home</Link>
        </div>
     );
   }
 
-  // If we have data, we render the portfolio (same as before)
+  // If we have data, we render the portfolio
   if (!config) return null; 
 
   const styles = getThemeStyles(config.theme);

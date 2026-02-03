@@ -11,6 +11,7 @@ export interface UserSecrets {
 export interface Profile {
   id: string;
   user_id?: string;
+  username?: string; // Added for public URL access
   language: LanguageCode;
   name: string;
   title: string;

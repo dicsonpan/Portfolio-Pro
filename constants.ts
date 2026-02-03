@@ -7,63 +7,88 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'ja', label: '日本語', flag: '🇯🇵' },
 ];
 
+// --- DEFAULT SITE RESUME (Shown on Root /) ---
+
 export const MOCK_PROFILE_EN: Profile = {
-  id: '1',
+  id: 'site-default',
+  username: 'portfolio-pro',
   language: 'en',
-  name: 'Alex Chen',
-  title: 'Product Designer & Developer',
-  tagline: 'Bridging the gap between code and design.',
-  bio: 'I craft high-performance web applications with a focus on user experience and scalable architecture. Passionate about React, TypeScript, and clean UI design.',
-  avatar_url: 'https://picsum.photos/400/400',
-  email: 'alex@example.com',
-  location: 'San Francisco, CA',
-  phone: '+1 (555) 123-4567',
-  github_url: 'https://github.com',
-  linkedin_url: 'https://linkedin.com',
+  name: 'Portfolio Pro',
+  title: 'AI-Powered Portfolio Builder',
+  tagline: 'Your career story, beautifully told.',
+  bio: 'I am an intelligent, open-source platform designed to help developers, designers, and creatives showcase their work. Built with React and Supabase, I seamlessly bridge the gap between structured data and stunning visual presentation. I feature a powerful Admin Dashboard and integrated Gemini AI to polish your content.',
+  avatar_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+  email: 'hello@portfolio.pro',
+  location: 'Cloud / Worldwide',
+  phone: '',
+  website: 'https://github.com/dicsonpan/Portfolio-Pro',
+  github_url: 'https://github.com/dicsonpan/Portfolio-Pro',
+  linkedin_url: '',
 };
 
-// Example Chinese Profile
 export const MOCK_PROFILE_ZH: Profile = {
-  id: '2',
+  id: 'site-default',
+  username: 'portfolio-pro',
   language: 'zh',
-  name: '陈亚历',
-  title: '产品设计师 & 开发者',
-  tagline: '连接代码与设计的桥梁。',
-  bio: '我专注于构建高性能的 Web 应用程序，注重用户体验和可扩展架构。对 React、TypeScript 和整洁的 UI 设计充满热情。',
-  avatar_url: 'https://picsum.photos/400/400',
-  email: 'alex@example.com',
-  location: '美国旧金山',
-  phone: '+1 (555) 123-4567',
-  github_url: 'https://github.com',
-  linkedin_url: 'https://linkedin.com',
+  name: 'Portfolio Pro',
+  title: '智能作品集构建器',
+  tagline: '让你的职业生涯熠熠生辉。',
+  bio: '我是一个智能的开源平台，旨在帮助开发者、设计师和创意人士展示他们的作品。我基于 React 和 Supabase 构建，无缝连接了结构化数据与精美的视觉呈现。我内置了强大的后台管理面板，并集成了 Gemini AI 来润色你的简历内容。',
+  avatar_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+  email: 'hello@portfolio.pro',
+  location: '云端 / 全球',
+  phone: '',
+  website: 'https://github.com/dicsonpan/Portfolio-Pro',
+  github_url: 'https://github.com/dicsonpan/Portfolio-Pro',
+  linkedin_url: '',
 };
 
 export const MOCK_CONFIG: SiteConfig = {
   theme: 'modern',
   primary_color: '#10b981',
-  display_order: ['about', 'experience', 'projects', 'education', 'skills']
+  display_order: ['about', 'projects', 'experience', 'skills', 'education']
 };
 
 export const MOCK_EXPERIENCE: Experience[] = [
   {
     id: '1',
     language: 'en',
-    company: 'TechFlow Inc.',
-    role: 'Senior Product Designer',
-    start_date: '2021-03-01',
+    company: 'Portfolio Pro',
+    role: 'Platform Evolution',
+    start_date: '2023-10-01',
     end_date: null,
-    description: 'Leading the design system team. Improved workflow efficiency by 40% through new Figma plugins and React component libraries.',
+    description: 'Continuously evolving with new features like AI-powered text polishing, real-time database integration (Supabase), and multi-theme support. Providing a robust solution for personal branding.',
+    current: true,
+  },
+  {
+    id: '1-zh',
+    language: 'zh',
+    company: 'Portfolio Pro',
+    role: '平台演进',
+    start_date: '2023-10-01',
+    end_date: null,
+    description: '持续迭代新功能，如 AI 文本润色、实时数据库集成 (Supabase) 和多主题支持。为个人品牌建设提供强大的解决方案。',
     current: true,
   },
   {
     id: '2',
+    language: 'en',
+    company: 'Open Source Community',
+    role: 'Frontend Architecture',
+    start_date: '2023-01-01',
+    end_date: '2023-09-30',
+    description: 'Designed the core architecture using Vite, React 18, and Tailwind CSS. Implemented a responsive, mobile-first design system with support for dark mode and high performance.',
+    current: false,
+  },
+  {
+    id: '2-zh',
     language: 'zh',
-    company: 'TechFlow 科技',
-    role: '高级产品设计师',
-    start_date: '2021-03-01',
-    end_date: null,
-    description: '领导设计系统团队。通过新的 Figma 插件和 React 组件库，将工作流效率提高了 40%。',
-    current: true,
+    company: '开源社区',
+    role: '前端架构设计',
+    start_date: '2023-01-01',
+    end_date: '2023-09-30',
+    description: '使用 Vite, React 18 和 Tailwind CSS 设计核心架构。实现了响应式、移动优先的设计系统，支持深色模式并保持高性能。',
+    current: false,
   }
 ];
 
@@ -71,12 +96,22 @@ export const MOCK_EDUCATION: Education[] = [
   {
     id: '1',
     language: 'en',
-    school: 'University of California, Berkeley',
-    degree: 'Bachelor of Science',
-    field: 'Computer Science & Design',
-    start_date: '2015-09-01',
-    end_date: '2019-05-30',
-    description: 'Graduated with Honors. President of the Design Club.'
+    school: 'React Ecosystem University',
+    degree: 'Master of UI/UX',
+    field: 'Modern Web Development',
+    start_date: '2022-01-01',
+    end_date: '2022-12-31',
+    description: 'Specialized in Component-Based Architecture, State Management, and User Centric Design.'
+  },
+  {
+    id: '1-zh',
+    language: 'zh',
+    school: 'React 生态大学',
+    degree: 'UI/UX 硕士',
+    field: '现代 Web 开发',
+    start_date: '2022-01-01',
+    end_date: '2022-12-31',
+    description: '专攻组件化架构、状态管理和以用户为中心的设计。'
   }
 ];
 
@@ -84,31 +119,52 @@ export const MOCK_PROJECTS: Project[] = [
   {
     id: '1',
     language: 'en',
-    title: 'E-Commerce Dashboard',
-    description: 'A comprehensive analytics dashboard for online retailers featuring real-time data visualization.',
-    image_url: 'https://picsum.photos/seed/project1/800/600',
+    title: 'Self-Reflection (This Website)',
+    description: 'A recursive project demonstrating my own capabilities. Features include a dynamic Admin Dashboard, instant theme switching, screenshot mode, and Google Gemini AI integration for resume polishing.',
+    image_url: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=2555&auto=format&fit=crop',
     demo_url: '#',
-    video_url: 'https://www.youtube.com/watch?v=LXb3EKWsInQ', // Example video
-    tags: ['React', 'D3.js', 'Supabase'],
+    video_url: '',
+    tags: ['React', 'TypeScript', 'Tailwind', 'Gemini AI'],
+  },
+  {
+    id: '1-zh',
+    language: 'zh',
+    title: '自我映射 (本网站)',
+    description: '一个展示自身能力的递归项目。功能包括动态管理后台、即时主题切换、截图模式以及用于简历润色的 Google Gemini AI 集成。',
+    image_url: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=2555&auto=format&fit=crop',
+    demo_url: '#',
+    video_url: '',
+    tags: ['React', 'TypeScript', 'Tailwind', 'Gemini AI'],
   },
   {
     id: '2',
-    language: 'zh',
-    title: '电商数据大屏',
-    description: '专为在线零售商设计的综合分析仪表板，具有实时数据可视化功能。',
-    image_url: 'https://picsum.photos/seed/project1/800/600',
+    language: 'en',
+    title: 'Supabase Integration',
+    description: 'A full-stack implementation connecting the frontend to a PostgreSQL database. Handles authentication, row-level security, and real-time data synchronization.',
+    image_url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2670&auto=format&fit=crop',
     demo_url: '#',
-    video_url: 'https://www.bilibili.com/video/BV1GJ411x7h7', // Example bilibili
-    tags: ['React', 'D3.js', 'Supabase'],
+    tags: ['PostgreSQL', 'SQL', 'Auth'],
+  },
+  {
+    id: '2-zh',
+    language: 'zh',
+    title: 'Supabase 集成',
+    description: '连接前端与 PostgreSQL 数据库的全栈实现。处理身份验证、行级安全 (RLS) 和实时数据同步。',
+    image_url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2670&auto=format&fit=crop',
+    demo_url: '#',
+    tags: ['PostgreSQL', 'SQL', 'Auth'],
   }
 ];
 
 export const MOCK_SKILLS: Skill[] = [
-  { id: '1', language: 'en', name: 'React', category: 'frontend', proficiency: 95 },
-  { id: '2', language: 'en', name: 'Figma', category: 'design', proficiency: 90 },
-  { id: '3', language: 'en', name: 'Node.js', category: 'backend', proficiency: 80 },
-  { id: '4', language: 'zh', name: 'React', category: 'frontend', proficiency: 95 },
-  { id: '5', language: 'zh', name: 'Figma', category: 'design', proficiency: 90 },
+  { id: '1', language: 'en', name: 'React 18', category: 'frontend', proficiency: 100 },
+  { id: '2', language: 'en', name: 'TypeScript', category: 'languages', proficiency: 95 },
+  { id: '3', language: 'en', name: 'Tailwind CSS', category: 'design', proficiency: 95 },
+  { id: '4', language: 'en', name: 'Supabase', category: 'backend', proficiency: 90 },
+  { id: '5', language: 'en', name: 'Gemini AI', category: 'tools', proficiency: 85 },
+  { id: '1-zh', language: 'zh', name: 'React 18', category: 'frontend', proficiency: 100 },
+  { id: '2-zh', language: 'zh', name: 'TypeScript', category: 'languages', proficiency: 95 },
+  { id: '3-zh', language: 'zh', name: 'Tailwind CSS', category: 'design', proficiency: 95 },
 ];
 
 const env = (import.meta as any).env || {};

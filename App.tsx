@@ -33,8 +33,12 @@ const App: React.FC = () => {
         <Navbar hidden={isScreenshotMode} />
         <div className="flex-grow">
           <Routes>
+            {/* Root displays the 'Site Resume' (Default) */}
             <Route path="/" element={<PublicView setScreenshotMode={setScreenshotMode} isScreenshotMode={isScreenshotMode} />} />
-            <Route path="/p/:userId" element={<PublicView setScreenshotMode={setScreenshotMode} isScreenshotMode={isScreenshotMode} />} />
+            
+            {/* User path for specific resumes e.g. /p/dicsonpan */}
+            <Route path="/p/:username" element={<PublicView setScreenshotMode={setScreenshotMode} isScreenshotMode={isScreenshotMode} />} />
+            
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={
               <ProtectedRoute>

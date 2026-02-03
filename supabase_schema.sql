@@ -1,12 +1,11 @@
 
 -- ==============================================================================
--- Portfolio Pro - Supabase Schema Script (v3.1 - One-Click Reset)
+-- Portfolio Pro - Supabase Schema Script (v3.2 - With Username)
 -- ==============================================================================
 -- ⚠️ WARNING: running this script will DELETE ALL DATA in the custom tables.
 -- It does NOT delete the registered users in Authentication (auth.users).
 
 -- 1. Clean up existing structures
--- We use CASCADE to automatically remove dependent constraints/objects
 drop table if exists public.skills cascade;
 drop table if exists public.projects cascade;
 drop table if exists public.education cascade;
@@ -15,8 +14,7 @@ drop table if exists public.config cascade;
 drop table if exists public.profile cascade;
 drop table if exists public.user_secrets cascade;
 
--- Clean up storage policies to prevent "policy already exists" errors during re-run
--- These policies are attached to the system table storage.objects, so we must drop them explicitly.
+-- Clean up storage policies
 drop policy if exists "Public Access" on storage.objects;
 drop policy if exists "Auth Upload" on storage.objects;
 drop policy if exists "Public Upload" on storage.objects;
@@ -39,6 +37,7 @@ create table public.user_secrets (
 create table public.profile (
   id uuid not null default uuid_generate_v4() primary key,
   user_id uuid references auth.users not null,
+  username text unique, -- Added username for pretty URLs
   language text default 'en',
   name text not null,
   title text,
@@ -120,7 +119,6 @@ create table public.skills (
 );
 
 -- 3. Storage Buckets Setup
--- Ensure bucket exists. If it exists, we skip creation.
 insert into storage.buckets (id, name, public) values ('portfolio-assets', 'portfolio-assets', true)
 on conflict (id) do nothing;
 
@@ -135,42 +133,37 @@ alter table public.skills enable row level security;
 
 -- 5. Create RLS Policies
 
--- Secrets: STRICTLY PRIVATE (Only the owner can see/edit)
+-- Secrets
 create policy "Users can manage their own secrets" on public.user_secrets
   for all using (auth.uid() = user_id);
 
--- Profile: Public Read, Owner Write
+-- Profile
 create policy "Public read profiles" on public.profile for select using (true);
 create policy "Owner manage profiles" on public.profile for all using (auth.uid() = user_id);
 
--- Config: Public Read, Owner Write
+-- Config
 create policy "Public read config" on public.config for select using (true);
 create policy "Owner manage config" on public.config for all using (auth.uid() = user_id);
 
--- Experiences: Public Read, Owner Write
+-- Experiences
 create policy "Public read experiences" on public.experiences for select using (true);
 create policy "Owner manage experiences" on public.experiences for all using (auth.uid() = user_id);
 
--- Education: Public Read, Owner Write
+-- Education
 create policy "Public read education" on public.education for select using (true);
 create policy "Owner manage education" on public.education for all using (auth.uid() = user_id);
 
--- Projects: Public Read, Owner Write
+-- Projects
 create policy "Public read projects" on public.projects for select using (true);
 create policy "Owner manage projects" on public.projects for all using (auth.uid() = user_id);
 
--- Skills: Public Read, Owner Write
+-- Skills
 create policy "Public read skills" on public.skills for select using (true);
 create policy "Owner manage skills" on public.skills for all using (auth.uid() = user_id);
 
 -- Storage Policies
--- 1. Public can VIEW files in the bucket
 create policy "Public Access" on storage.objects 
 for select using ( bucket_id = 'portfolio-assets' );
 
--- 2. Authenticated users can UPLOAD/UPDATE/DELETE files in the bucket
--- (In a stricter production app, you might restrict this to files named with their user_id, 
--- but for this MVP, allowing auth users to manage the bucket is acceptable)
 create policy "Auth Upload" on storage.objects 
 for insert with check ( bucket_id = 'portfolio-assets' and auth.role() = 'authenticated' );
-

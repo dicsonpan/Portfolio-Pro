@@ -262,6 +262,7 @@ const AdminView: React.FC = () => {
                   />
                   
                   <div className="space-y-4">
+                     <Input label="Username (URL Slug)" value={profile.username || ''} onChange={e => setProfile({...profile, username: e.target.value})} placeholder="e.g. dicsonpan" />
                      <Input label="Full Name" value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})} />
                      <Input label="Job Title" value={profile.title} onChange={e => setProfile({...profile, title: e.target.value})} />
                      <Input label="One-line Tagline" value={profile.tagline || ''} onChange={e => setProfile({...profile, tagline: e.target.value})} />

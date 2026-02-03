@@ -1,6 +1,7 @@
-# Portfolio Pro - 个人简历与作品集展示系统
 
-这是一个基于 **React**、**TypeScript** 和 **Tailwind CSS** 构建的高性能个人简历网站。项目采用了现代化架构，包含**对公众展示的前端页面**以及**管理内容的后台仪表盘**。
+# NextFolio - Next-Gen Portfolio Builder
+
+这是一个基于 **React**、**TypeScript** 和 **Tailwind CSS** 构建的高性能个人简历与作品集展示系统。项目采用了现代化架构，包含**对公众展示的前端页面**以及**管理内容的后台仪表盘**。
 
 ![Project Preview](https://picsum.photos/seed/project1/800/400) <!-- 建议您后续替换为实际截图 -->
 
@@ -9,14 +10,15 @@
 ### 🖥️ 前端展示 (Public Portfolio)
 - **极简深色美学**: 采用 Zinc 色系的高级深色模式设计，视觉体验舒适且专业。
 - **多主题切换**: 内置 Modern Dark, Classic Paper, Creative Pop 三种风格。
+- **多语言支持**: 支持 English, 简体中文, 繁體中文。
 - **长图快照模式**: 专为社交媒体分享优化，一键生成适合手机阅读的紧凑版式。
 - **个人信息区**: 展示头像、职位、简介及 GitHub/LinkedIn 等社交链接。
 - **工作经历时间轴**: 清晰展示职业生涯节点与成就。
 - **项目展示网格**: 图文并茂地展示个人作品，支持标签分类和外部链接。
-- **技能可视化**: 直观展示技术栈掌握程度。
 
 ### ⚙️ 后台管理 (Admin Dashboard)
 - **可视化编辑**: 无需修改代码，直接在后台录入和修改个人信息、工作经历、项目和技能。
+- **AI 润色**: 集成 Google Gemini AI，一键优化简历文案。
 - **实时预览**: 后台修改的数据会立即反映在前端页面。
 - **数据持久化**: 
   - **演示模式**: 默认使用浏览器 `LocalStorage`，开箱即用，数据不丢失。
@@ -29,13 +31,14 @@
 - **样式方案**: Tailwind CSS
 - **路由管理**: React Router DOM (Hash Mode)
 - **图标库**: Lucide React
+- **AI 支持**: Google Gemini API
 - **数据层**: Service Pattern (抽象了 LocalStorage 与 Supabase 的实现)
 
 ## 🚀 快速开始
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/your-username/portfolio-pro.git
+   git clone https://github.com/your-username/nextfolio.git
    ```
 
 2. **安装依赖**
@@ -50,7 +53,7 @@
 
 4. **使用指南**
    - **前端首页**: 访问 `http://localhost:5173/`
-   - **后台管理**: 点击导航栏的 "Admin" 按钮或访问 `http://localhost:5173/#/admin`
+   - **后台管理**: 点击导航栏的 "Dashboard" 按钮或访问 `http://localhost:5173/#/admin`
 
 ## 📝 自定义配置
 

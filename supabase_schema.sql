@@ -1,6 +1,6 @@
 
 -- ==============================================================================
--- Portfolio Pro - Supabase Schema Script (v3.2 - With Username)
+-- NextFolio - Supabase Schema Script (v4.0 - With Username & Multi-language)
 -- ==============================================================================
 -- ⚠️ WARNING: running this script will DELETE ALL DATA in the custom tables.
 -- It does NOT delete the registered users in Authentication (auth.users).

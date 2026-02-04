@@ -7,19 +7,21 @@ import { authService } from '../../services/authService';
 
 // Logo Component
 // Design: A geometric monogram combining 'N' and 'F'.
-// The Left Vertical and Top/Middle bars form an 'F' (White).
-// A diagonal stroke connects the F to a Right Vertical bar to form an 'N' (Primary Green), representing "Next".
+// Updated: 'N' (Next) is White. 'F' (Folio) bars are Green (#10b981).
 const Logo: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => (
   <svg className={className} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
     {/* Background: Dark rounded square (Zinc-900/950) */}
     <rect width="40" height="40" rx="8" fill="#18181b"/>
     
-    {/* White Shape: Forms the letter 'F' */}
-    <path d="M10 10H24V14H14V19H22V23H14V30H10V10Z" fill="white"/>
+    {/* N Shape (White): Represents "Next" */}
+    {/* Left Vertical Stem (Shared with F) */}
+    <path d="M10 10H14V30H10Z" fill="white"/>
+    {/* Diagonal and Right Vertical Stem */}
+    <path d="M14 10L26 26V10H30V30H26L14 14V10Z" fill="white"/>
     
-    {/* Green Shape: Forms the diagonal and right leg of 'N', integrating with the 'F' */}
-    {/* The diagonal cuts through, creating a sense of forward motion (Next) */}
-    <path d="M14 10L26 26V10H30V30H26L14 14V10Z" fill="#10b981"/> 
+    {/* F Shape (Green): Represents "Folio" */}
+    {/* Only the horizontal bars are green, overlaying the N */}
+    <path d="M14 10H24V14H14Z M14 19H22V23H14Z" fill="#10b981"/> 
   </svg>
 );
 

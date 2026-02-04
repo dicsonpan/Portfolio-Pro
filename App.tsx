@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { Navbar, Footer } from './components/ui/Layouts';
 import PublicView from './pages/PublicView';
 import AdminView from './pages/AdminView';
@@ -48,6 +49,7 @@ const App: React.FC = () => {
           </Routes>
         </div>
         <Footer hidden={isScreenshotMode} />
+        <Analytics />
       </div>
     </HashRouter>
   );

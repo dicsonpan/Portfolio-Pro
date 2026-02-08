@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Save, User, Briefcase, FolderGit2, Cpu, GraduationCap, Palette, Sparkles, Wand2, Lock, ShieldCheck } from 'lucide-react';
+import { Plus, Trash2, Save, User, Briefcase, FolderGit2, Cpu, GraduationCap, Palette, Sparkles, Wand2, Lock, ShieldCheck, Languages, RefreshCw } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { authService } from '../services/authService';
 import { aiService } from '../services/aiService';
@@ -28,6 +27,7 @@ const AdminView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
 
   // Settings State
   const [newPassword, setNewPassword] = useState('');
@@ -81,6 +81,96 @@ const AdminView: React.FC = () => {
       alert("AI Polish failed. Check console or make sure API_KEY is set in environment.");
     } finally {
       setAiLoading(null);
+    }
+  };
+
+  const handleAutoTranslate = async () => {
+    const confirmMsg = `AI Translation will overwrite content in other languages based on your current ${lang} content.\n\nAre you sure you want to translate and sync to ALL supported languages?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setTranslating(true);
+    try {
+      const targets = SUPPORTED_LANGUAGES.filter(l => l.code !== lang);
+      
+      // 1. Translate Profile
+      if (profile) {
+        for (const target of targets) {
+          const translatedProfile = await aiService.translateJSON(profile, target.label);
+          // Fix critical fields that must NOT change or must match the target
+          translatedProfile.language = target.code; 
+          translatedProfile.id = uuidv4(); // Generate new ID for new row, or we could upsert based on user_id+lang
+          // We need to check if a profile already exists for this language to reuse ID if possible, 
+          // but for simplicity in this "sync" mode, we'll let dataService.updateProfile handle upsert logic usually.
+          // However, dataService.updateProfile implementation usually relies on ID. 
+          // Let's first fetch if it exists to keep ID consistent.
+          const existing = await dataService.getProfile(target.code as LanguageCode);
+          if (existing) translatedProfile.id = existing.id;
+          
+          await dataService.updateProfile(translatedProfile);
+        }
+      }
+
+      // 2. Translate Education
+      // Strategy: Delete existing for target lang and recreate based on current
+      for (const target of targets) {
+        // Fetch existing to delete (optional, but cleaner for full sync)
+        const existingEdu = await dataService.getEducation(target.code as LanguageCode);
+        for (const item of existingEdu) await dataService.deleteEducation(item.id);
+
+        for (const item of education) {
+           const translated = await aiService.translateJSON(item, target.label);
+           translated.language = target.code;
+           translated.id = uuidv4(); 
+           await dataService.saveEducation(translated);
+        }
+      }
+
+      // 3. Translate Experience
+      for (const target of targets) {
+        const existingExp = await dataService.getExperiences(target.code as LanguageCode);
+        for (const item of existingExp) await dataService.deleteExperience(item.id);
+
+        for (const item of experiences) {
+           const translated = await aiService.translateJSON(item, target.label);
+           translated.language = target.code;
+           translated.id = uuidv4();
+           await dataService.saveExperience(translated);
+        }
+      }
+
+      // 4. Translate Projects
+      for (const target of targets) {
+        const existingProj = await dataService.getProjects(target.code as LanguageCode);
+        for (const item of existingProj) await dataService.deleteProject(item.id);
+
+        for (const item of projects) {
+           const translated = await aiService.translateJSON(item, target.label);
+           translated.language = target.code;
+           translated.id = uuidv4();
+           await dataService.saveProject(translated);
+        }
+      }
+
+      // 5. Translate Skills
+      for (const target of targets) {
+        const existingSkills = await dataService.getSkills(target.code as LanguageCode);
+        for (const item of existingSkills) await dataService.deleteSkill(item.id);
+
+        for (const item of skills) {
+           const translated = await aiService.translateJSON(item, target.label);
+           translated.language = target.code;
+           translated.id = uuidv4();
+           await dataService.saveSkill(translated);
+        }
+      }
+
+      alert("🎉 All languages have been synced and translated from " + lang);
+
+    } catch (error: any) {
+      alert("Translation failed: " + error.message);
+      console.error(error);
+    } finally {
+      setTranslating(false);
     }
   };
 
@@ -187,6 +277,16 @@ const AdminView: React.FC = () => {
            </div>
            
            <div className="flex items-center gap-4">
+              <Button 
+                onClick={handleAutoTranslate} 
+                disabled={translating}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 border border-indigo-500/50"
+                title={`Translate current ${lang} content to all other supported languages.`}
+              >
+                {translating ? <RefreshCw className="animate-spin" size={16} /> : <Languages size={16} />}
+                {translating ? 'Translating...' : 'AI Translate All'}
+              </Button>
+
               <div className="flex items-center gap-2 bg-zinc-950 p-1 rounded-lg border border-zinc-800">
                 {SUPPORTED_LANGUAGES.map(l => (
                     <button

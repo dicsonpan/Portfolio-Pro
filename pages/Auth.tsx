@@ -13,7 +13,7 @@ const Auth: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Check if user is already logged in (e.g. clicked the Magic Link)
+  // Check if user is already logged in
   useEffect(() => {
     const checkUser = async () => {
       const user = await authService.getUser();
@@ -23,7 +23,7 @@ const Auth: React.FC = () => {
     };
     checkUser();
 
-    // Listen for auth state changes (Magic Link click processing)
+    // Listen for auth state changes
     const { data: { subscription } } = authService.getClient().auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         navigate('/admin');
@@ -57,7 +57,7 @@ const Auth: React.FC = () => {
       await authService.verifyOtp(email, otp);
       navigate('/admin');
     } catch (err: any) {
-      setError(err.message || 'Invalid code. If you received a link, please click it instead.');
+      setError(err.message || 'Invalid code. Please check your email again.');
     } finally {
       setLoading(false);
     }
@@ -90,13 +90,12 @@ const Auth: React.FC = () => {
                    required
                  />
                  <div className="text-xs text-zinc-500 mt-2 p-2 bg-zinc-950 rounded border border-zinc-800">
-                   <p className="font-semibold text-zinc-400 mb-1">Tip:</p>
-                   If you receive a <strong>Magic Link</strong> in your email, simply click it to log in automatically. 
-                   If you receive a <strong>6-digit code</strong>, enter it on the next screen.
+                   <p className="font-semibold text-zinc-400 mb-1">How it works:</p>
+                   We will send a <strong>6-digit verification code</strong> to your email. No password required.
                  </div>
               </div>
               <Button className="w-full flex items-center justify-center gap-2" disabled={loading}>
-                {loading ? 'Sending...' : 'Send Code / Link'} <ArrowRight size={16} />
+                {loading ? 'Sending...' : 'Send Verification Code'} <ArrowRight size={16} />
               </Button>
             </form>
           ) : (
@@ -105,7 +104,7 @@ const Auth: React.FC = () => {
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-500 mb-4">
                   <Mail size={24} />
                 </div>
-                <p className="text-white text-sm">Check your email <span className="font-bold">{email}</span></p>
+                <p className="text-white text-sm">Code sent to <span className="font-bold">{email}</span></p>
                 <button type="button" onClick={() => setStep('email')} className="text-xs text-zinc-500 hover:text-zinc-300 underline mt-1">Change email</button>
               </div>
 
@@ -120,9 +119,6 @@ const Auth: React.FC = () => {
                    required
                    maxLength={6}
                  />
-                 <p className="text-xs text-zinc-500 text-center mt-2">
-                   Or click the link in the email if provided.
-                 </p>
               </div>
               <Button className="w-full flex items-center justify-center gap-2" disabled={loading}>
                 {loading ? 'Verifying...' : 'Verify & Login'} <CheckCircle size={16} />

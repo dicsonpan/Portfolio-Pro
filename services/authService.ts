@@ -40,13 +40,12 @@ export const authService = {
   async signInWithOtp(email: string) {
     if (!supabase) throw new Error("Supabase is not configured. Authentication is disabled.");
     
+    // By NOT providing emailRedirectTo, we encourage Supabase to send a numeric code 
+    // instead of a magic link (depending on the email template configuration).
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: true, // Allows registration via this flow
-        // Fix: Ensure the magic link redirects to the current URL (e.g. localhost:5173) 
-        // instead of the default localhost:3000 which causes "Cannot connect to server" errors.
-        emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
       },
     });
     if (error) throw error;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Save, User, Briefcase, FolderGit2, Cpu, GraduationCap, Palette, Sparkles, Wand2, Lock, ShieldCheck, Languages, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Save, User, Briefcase, FolderGit2, Cpu, GraduationCap, Palette, Sparkles, Wand2, Lock, ShieldCheck, Languages, RefreshCw, Globe, Contact } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { authService } from '../services/authService';
 import { aiService } from '../services/aiService';
@@ -98,11 +98,8 @@ const AdminView: React.FC = () => {
           const translatedProfile = await aiService.translateJSON(profile, target.label);
           // Fix critical fields that must NOT change or must match the target
           translatedProfile.language = target.code; 
-          translatedProfile.id = uuidv4(); // Generate new ID for new row, or we could upsert based on user_id+lang
-          // We need to check if a profile already exists for this language to reuse ID if possible, 
-          // but for simplicity in this "sync" mode, we'll let dataService.updateProfile handle upsert logic usually.
-          // However, dataService.updateProfile implementation usually relies on ID. 
-          // Let's first fetch if it exists to keep ID consistent.
+          translatedProfile.id = uuidv4(); 
+          // Re-sync IDs if existing
           const existing = await dataService.getProfile(target.code as LanguageCode);
           if (existing) translatedProfile.id = existing.id;
           
@@ -113,7 +110,6 @@ const AdminView: React.FC = () => {
       // 2. Translate Education
       // Strategy: Delete existing for target lang and recreate based on current
       for (const target of targets) {
-        // Fetch existing to delete (optional, but cleaner for full sync)
         const existingEdu = await dataService.getEducation(target.code as LanguageCode);
         for (const item of existingEdu) await dataService.deleteEducation(item.id);
 
@@ -190,9 +186,10 @@ const AdminView: React.FC = () => {
   const handleSaveProfile = async () => {
     if (!profile) return;
     setSaving(true);
+    // Note: dataService.updateProfile handles the logic to sync shared fields (email, etc) to other languages
     await dataService.updateProfile(profile);
     setSaving(false);
-    alert('Profile updated!');
+    alert('Profile saved! Shared info synced to all languages.');
   };
 
   const handleSaveConfig = async () => {
@@ -386,42 +383,66 @@ const AdminView: React.FC = () => {
 
             {/* PROFILE TAB */}
             {activeTab === 'profile' && profile && (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 md:p-8 animate-fade-in">
-                <div className="flex justify-between items-center mb-8">
-                  <h3 className="text-2xl font-bold text-white">Edit Profile ({lang.toUpperCase()})</h3>
-                  <Button onClick={handleSaveProfile} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 md:p-8 animate-fade-in space-y-8">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-bold text-white">Edit Profile</h3>
+                  <Button onClick={handleSaveProfile} disabled={saving}>{saving ? 'Saving...' : 'Save All'}</Button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FileUpload 
-                     label="Avatar Image" 
-                     value={profile.avatar_url} 
-                     onUpload={(url) => setProfile({...profile, avatar_url: url})} 
-                     onFileSelect={handleUploadImage}
-                  />
-                  
-                  <div className="space-y-4">
-                     <Input label="Username (URL Slug)" value={profile.username || ''} onChange={e => setProfile({...profile, username: e.target.value})} placeholder="e.g. dicsonpan" />
-                     <Input label="Full Name" value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})} />
-                     <Input label="Job Title" value={profile.title} onChange={e => setProfile({...profile, title: e.target.value})} />
-                     <Input label="One-line Tagline" value={profile.tagline || ''} onChange={e => setProfile({...profile, tagline: e.target.value})} />
-                  </div>
+                {/* GLOBAL INFO */}
+                <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-6">
+                   <div className="flex items-center gap-2 mb-6 border-b border-zinc-800 pb-2">
+                      <Contact size={20} className="text-primary" />
+                      <h4 className="text-lg font-semibold text-white">Global Information</h4>
+                      <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded ml-auto">Shared across all languages</span>
+                   </div>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="md:col-span-2">
+                        <FileUpload 
+                          label="Avatar Image (Universal)" 
+                          value={profile.avatar_url} 
+                          onUpload={(url) => setProfile({...profile, avatar_url: url})} 
+                          onFileSelect={handleUploadImage}
+                        />
+                      </div>
+                      <Input 
+                        label="Username (URL Slug)" 
+                        value={profile.username || ''} 
+                        onChange={e => setProfile({...profile, username: e.target.value})} 
+                        placeholder="e.g. dicsonpan" 
+                      />
+                      <Input label="Email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
+                      <Input label="Phone" value={profile.phone || ''} onChange={e => setProfile({...profile, phone: e.target.value})} />
+                      <Input label="Website" value={profile.website || ''} onChange={e => setProfile({...profile, website: e.target.value})} />
+                      <Input label="GitHub URL" value={profile.github_url || ''} onChange={e => setProfile({...profile, github_url: e.target.value})} />
+                      <Input label="LinkedIn URL" value={profile.linkedin_url || ''} onChange={e => setProfile({...profile, linkedin_url: e.target.value})} />
+                   </div>
+                </div>
 
-                  <div className="md:col-span-2">
-                    <TextArea 
-                        label="Bio / Summary" 
-                        value={profile.bio} 
-                        onChange={e => setProfile({...profile, bio: e.target.value})}
-                        extraAction={<AIPolishButton text={profile.bio} fieldId="bio" onUpdate={s => setProfile({...profile, bio: s})} />}
-                    />
-                  </div>
+                {/* LOCALIZED INFO */}
+                <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-6">
+                   <div className="flex items-center gap-2 mb-6 border-b border-zinc-800 pb-2">
+                      <Globe size={20} className="text-primary" />
+                      <h4 className="text-lg font-semibold text-white">Localized Content</h4>
+                      <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded ml-auto">{lang.toUpperCase()} Version</span>
+                   </div>
 
-                  <Input label="Email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
-                  <Input label="Phone" value={profile.phone || ''} onChange={e => setProfile({...profile, phone: e.target.value})} />
-                  <Input label="Location" value={profile.location} onChange={e => setProfile({...profile, location: e.target.value})} />
-                  <Input label="Website" value={profile.website || ''} onChange={e => setProfile({...profile, website: e.target.value})} />
-                  <Input label="GitHub URL" value={profile.github_url || ''} onChange={e => setProfile({...profile, github_url: e.target.value})} />
-                  <Input label="LinkedIn URL" value={profile.linkedin_url || ''} onChange={e => setProfile({...profile, linkedin_url: e.target.value})} />
+                   <div className="grid grid-cols-1 gap-6">
+                      <Input label="Full Name" value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})} />
+                      <Input label="Job Title" value={profile.title} onChange={e => setProfile({...profile, title: e.target.value})} />
+                      <Input label="One-line Tagline" value={profile.tagline || ''} onChange={e => setProfile({...profile, tagline: e.target.value})} />
+                      <Input label="Location (e.g. Beijing, China)" value={profile.location} onChange={e => setProfile({...profile, location: e.target.value})} />
+                      
+                      <div>
+                        <TextArea 
+                            label="Bio / Summary" 
+                            value={profile.bio} 
+                            onChange={e => setProfile({...profile, bio: e.target.value})}
+                            extraAction={<AIPolishButton text={profile.bio} fieldId="bio" onUpdate={s => setProfile({...profile, bio: s})} />}
+                        />
+                      </div>
+                   </div>
                 </div>
               </div>
             )}

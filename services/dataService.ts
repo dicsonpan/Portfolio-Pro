@@ -1,4 +1,3 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { AppData, Experience, Profile, Project, Skill, Education, SiteConfig, LanguageCode, UserSecrets } from '../types';
 import { MOCK_EXPERIENCE, MOCK_PROFILE_EN, MOCK_PROFILE_ZH, MOCK_PROFILE_ZH_TW, MOCK_PROJECTS, MOCK_SKILLS, MOCK_EDUCATION, MOCK_CONFIG, SUPABASE_ANON_KEY, SUPABASE_URL } from '../constants';
@@ -118,34 +117,62 @@ export const dataService = {
 
   // --- Profile ---
   
-  // New method: Fetch by Username (or User ID)
+  // Updated method: Robust Username Resolution
   async getProfile(lang: LanguageCode, identifier?: { userId?: string; username?: string }): Promise<Profile | null> {
     if (supabase) {
-      let query = supabase.from('profile').select('*').eq('language', lang);
+      let targetUserId = identifier?.userId;
 
-      if (identifier?.userId) {
-        query = query.eq('user_id', identifier.userId);
-      } else if (identifier?.username) {
-        query = query.eq('username', identifier.username);
-      } else {
-        // Fallback for Admin view: use logged-in user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          query = query.eq('user_id', user.id);
-        } else {
-          // No identifier and no login? return null
-          return null;
-        }
+      // 1. If username provided, we must first find WHICH user owns this username.
+      // The username might exist on their 'en' profile but not their 'zh' profile yet,
+      // or vice-versa. We need the user_id to then fetch the correct language.
+      if (!targetUserId && identifier?.username) {
+         const { data: userRef } = await supabase
+            .from('profile')
+            .select('user_id')
+            .eq('username', identifier.username)
+            .limit(1)
+            .single();
+         
+         if (userRef) {
+            targetUserId = userRef.user_id;
+         } else {
+            return null; // Username not found anywhere
+         }
       }
 
-      const { data } = await query.single();
+      // 2. If no identifier provided, assume current logged in user
+      if (!targetUserId) {
+         const { data: { user } } = await supabase.auth.getUser();
+         if (user) targetUserId = user.id;
+      }
+
+      if (!targetUserId) return null;
+
+      // 3. Now fetch the specific language profile for this user
+      const { data, error } = await supabase
+        .from('profile')
+        .select('*')
+        .eq('user_id', targetUserId)
+        .eq('language', lang)
+        .single();
+
+      // 4. Fallback: If requested language doesn't exist for this user, 
+      // try to return their 'en' profile or ANY profile so we don't show 404
+      if (!data) {
+         const { data: fallback } = await supabase
+            .from('profile')
+            .select('*')
+            .eq('user_id', targetUserId)
+            .limit(1)
+            .single();
+         return fallback;
+      }
+
       return data;
     }
     
     // Local Storage Fallback
     const data = getLocalData();
-    // In local mode, we basically ignore username/id for simplicity, 
-    // effectively treating the local user as the "only" user.
     return data.profiles.find(p => p.language === lang) || null;
   },
 
@@ -154,16 +181,57 @@ export const dataService = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       
+      // 1. Upsert the specific language profile
       await supabase.from('profile').upsert({ ...profile, user_id: user.id });
+
+      // 2. Sync GLOBAL fields to ALL other language profiles for this user.
+      // These fields should be consistent across languages.
+      // We exclude 'username' from automatic sync here to avoid unique constraint violations
+      // if the schema forces uniqueness globally. Ideally username is only on one record, 
+      // or unique(username, language). Assuming simple unique(username), we treat it gently.
+      // However, email/phone/socials/avatar should definitely sync.
+      const globalFields = {
+        email: profile.email,
+        phone: profile.phone,
+        website: profile.website,
+        avatar_url: profile.avatar_url,
+        github_url: profile.github_url,
+        linkedin_url: profile.linkedin_url,
+        twitter_url: profile.twitter_url,
+        // We do NOT sync username here to prevent DB "duplicate key" errors if the schema 
+        // enforces strict global uniqueness on the text column.
+        // Users should edit username carefully or we need a stricter schema migration.
+      };
+
+      await supabase.from('profile')
+        .update(globalFields)
+        .eq('user_id', user.id);
+
       return;
     }
+
+    // Local Storage Logic
     const data = getLocalData();
     const index = data.profiles.findIndex(p => p.language === profile.language);
+    
     if (index >= 0) {
       data.profiles[index] = profile;
     } else {
       data.profiles.push(profile);
     }
+
+    // Sync global fields locally
+    data.profiles.forEach(p => {
+       if (p.id !== profile.id) { // Don't re-update self
+          p.email = profile.email;
+          p.phone = profile.phone;
+          p.website = profile.website;
+          p.avatar_url = profile.avatar_url;
+          p.github_url = profile.github_url;
+          p.linkedin_url = profile.linkedin_url;
+       }
+    });
+
     setLocalData(data);
   },
 

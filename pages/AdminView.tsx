@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Trash2, Save, User, Briefcase, FolderGit2, Cpu, GraduationCap, Palette, Sparkles, Wand2 } from 'lucide-react';
@@ -26,20 +25,11 @@ const AdminView: React.FC = () => {
   // UI State
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [geminiKey, setGeminiKey] = useState('');
   const [aiLoading, setAiLoading] = useState<string | null>(null); // holds the field ID being polished
 
   useEffect(() => {
     loadAll(lang);
-    loadSecrets();
   }, [lang]);
-
-  const loadSecrets = async () => {
-     const secrets = await dataService.getUserSecrets();
-     if (secrets && secrets.gemini_api_key) {
-        setGeminiKey(secrets.gemini_api_key);
-     }
-  };
 
   const loadAll = async (language: LanguageCode) => {
     setLoading(true);
@@ -77,24 +67,13 @@ const AdminView: React.FC = () => {
   };
 
   // --- AI Helpers ---
-  const saveGeminiKey = async (key: string) => {
-    setGeminiKey(key);
-    // Debounce or save on blur ideal, but simple here
-    await dataService.saveUserSecrets({ gemini_api_key: key });
-  };
-
   const handleAIPolish = async (text: string, fieldId: string, onUpdate: (newText: string) => void) => {
-    if (!geminiKey) {
-      alert("Please enter your Gemini API Key in the 'Settings' tab first.");
-      setActiveTab('settings');
-      return;
-    }
     setAiLoading(fieldId);
     try {
-      const polished = await aiService.polishText(geminiKey, text);
+      const polished = await aiService.polishText(text);
       onUpdate(polished);
     } catch (e) {
-      alert("AI Polish failed. Check console or API Key.");
+      alert("AI Polish failed. Check console or make sure API_KEY is set in environment.");
     } finally {
       setAiLoading(null);
     }
@@ -229,18 +208,10 @@ const AdminView: React.FC = () => {
             {activeTab === 'settings' && (
                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 md:p-8 animate-fade-in">
                   <h3 className="text-2xl font-bold text-white mb-6">Global Settings</h3>
-                  
-                  <div className="mb-8">
-                     <h4 className="text-lg font-medium text-white mb-2 flex items-center gap-2"><Sparkles size={18} className="text-purple-400"/> AI Configuration</h4>
-                     <p className="text-sm text-zinc-400 mb-4">Enter your Google Gemini API Key to enable AI resume polishing features.</p>
-                     <Input 
-                        label="Gemini API Key" 
-                        type="password" 
-                        value={geminiKey} 
-                        onChange={(e) => saveGeminiKey(e.target.value)} 
-                        placeholder="AIzaSy..."
-                     />
-                     <div className="text-xs text-zinc-500">Key is encrypted and stored securely in your private database.</div>
+                  <div className="mb-8 text-zinc-400 text-sm">
+                     <p>Application version: 1.0.0</p>
+                     <p>Environment: {process.env.NODE_ENV || 'development'}</p>
+                     <p className="mt-4 text-xs text-zinc-500">API Keys are managed via environment variables.</p>
                   </div>
                </div>
             )}

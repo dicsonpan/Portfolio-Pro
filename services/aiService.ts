@@ -1,9 +1,9 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 export const aiService = {
-  async polishText(apiKey: string, text: string, context: string = 'resume'): Promise<string> {
-    if (!apiKey) throw new Error("API Key is required");
+  async polishText(text: string, context: string = 'resume'): Promise<string> {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) throw new Error("API Key is not configured in environment variables.");
     if (!text) return "";
 
     const ai = new GoogleGenAI({ apiKey });
@@ -22,7 +22,7 @@ export const aiService = {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-preview',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
       });
       return response.text?.trim() || text;

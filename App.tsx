@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, PropsWithChildren } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { Navbar, Footer } from './components/ui/Layouts';
@@ -8,7 +7,7 @@ import AdminView from './pages/AdminView';
 import Auth from './pages/Auth';
 import { authService } from './services/authService';
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute: React.FC<PropsWithChildren<{}>> = ({ children }) => {
    const [loading, setLoading] = useState(true);
    const [user, setUser] = useState<any>(null);
 
